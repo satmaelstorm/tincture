@@ -53,7 +53,7 @@ func (t *TinctureDB) GetReceipts() []domain.Receipt {
 
 func (t *TinctureDB) GetTinctures() []domain.Tincture {
 	var tinctures []domain.Tincture
-	result := t.db.Find(&tinctures)
+	result := t.db.Order("need_bottled_at asc, created_at asc").Find(&tinctures)
 	log.Printf("Loaded %d tinctures\n", result.RowsAffected)
 	return tinctures
 }

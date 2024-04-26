@@ -19,7 +19,7 @@ var curUi *ui
 
 func CreateWindow() fyne.Window {
 
-	myWindow := thisApp().app.NewWindow("Настойки")
+	myWindow := thisApp().app.NewWindow("Tinctures")
 
 	err := thisApp().storage.InitDb(thisApp().app.Storage().RootURI())
 	if err != nil {
@@ -36,6 +36,10 @@ func InitialLayout(w fyne.Window) fyne.Window {
 		ui.tabs...,
 	)
 
+	if !thisApp().app.Driver().Device().IsMobile() {
+		ui.tabsCont.Resize(w.Canvas().Size())
+	}
+
 	w.SetContent(ui.tabsCont)
 
 	return w
@@ -45,8 +49,10 @@ func getUi() *ui {
 	if nil == curUi {
 		receipts := makeReceipts()
 		times := makeTimes()
+		tabTimes := container.NewVScroll(times)
+		tabTimes.SetMinSize(fyne.NewSize(360, 250))
 		tabs := []*container.TabItem{
-			container.NewTabItem("Мои настойки", times),
+			container.NewTabItem("Мои настойки", tabTimes),
 			container.NewTabItem("Рецепты", receipts),
 		}
 		curUi = &ui{receipts: receipts, times: times, tabs: tabs}

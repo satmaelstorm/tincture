@@ -9,6 +9,7 @@ import (
 	widgetX "fyne.io/x/fyne/widget"
 	"github.com/satmaelstorm/tincture/app/app/port"
 	"github.com/satmaelstorm/tincture/app/domain"
+	"sort"
 	"strconv"
 	"time"
 )
@@ -18,10 +19,12 @@ type tinctureRenderer struct {
 	cont               *fyne.Container
 	rows               map[string]*fyne.Container
 	addPopup           *widget.PopUp
+	tinctures          map[string]domain.Tincture
 }
 
 func (t *tinctureRenderer) renderTinctures(tinctures []domain.Tincture) *fyne.Container {
 	t.rows = make(map[string]*fyne.Container, len(tinctures))
+	t.tinctures = make(map[string]domain.Tincture, len(tinctures))
 	t.cont = container.New(layout.NewVBoxLayout())
 	t.cont.Add(widget.NewButton("Добавить", func() {
 		t.handleAddButton()
@@ -36,6 +39,7 @@ func (t *tinctureRenderer) addRenderTincture(tincture domain.Tincture) {
 	rowCont := container.New(layout.NewVBoxLayout())
 	t.rows[tincture.Uuid.String()] = t.renderTincture(tincture, rowCont)
 	t.cont.Add(rowCont)
+	t.tinctures[tincture.Uuid.String()] = tincture
 }
 
 func (t *tinctureRenderer) renderTincture(tincture domain.Tincture, cont *fyne.Container) *fyne.Container {
@@ -192,7 +196,7 @@ func (t *tinctureRenderer) createAddPopup() {
 		widget.NewFormItem("Годно дней:", daysToExpire),
 	)
 
-	popup := widget.NewModalPopUp(container.New(layout.NewStackLayout(), form), getUi().window.Canvas())
+	popup := widget.NewModalPopUp(widget.NewCard("Добавить настойку", "", form), getUi().window.Canvas())
 
 	form.OnSubmit = func() {
 		tincture := domain.NewTincture(
@@ -217,5 +221,29 @@ func (t *tinctureRenderer) createAddPopup() {
 func (t *tinctureRenderer) handleSubmitNewTincture(tincture domain.Tincture) {
 	t.tinctureRepository.CreateTincture(&tincture)
 	t.addRenderTincture(tincture)
+	t.rearrangeRows()
 	t.cont.Refresh()
+}
+
+func (t *tinctureRenderer) rearrangeRows() {
+	tinctures := make([]domain.Tincture, 0, len(t.tinctures))
+	for _, tincture := range t.tinctures {
+		tinctures = append(tinctures, tincture)
+	}
+	sort.Slice(tinctures, func(i, j int) bool {
+		if tinctures[i].NeedBottledAt.Before(tinctures[j].NeedBottledAt) {
+			return true
+		}
+		if tinctures[i].CreatedAt.Before(tinctures[j].CreatedAt) {
+			return true
+		}
+		return false
+	})
+	for _, obj := range t.rows {
+		t.cont.Remove(obj)
+
+	}
+	for _, tincture := range tinctures {
+		t.cont.Add(t.rows[tincture.Uuid.String()])
+	}
 }

@@ -63,6 +63,7 @@ func makeReceipts() *widget.Accordion {
 }
 
 func makeTimes() *fyne.Container {
+	renderer := tinctureRenderer{tinctureRepository: thisApp().tincturesRepository}
 	items := thisApp().tincturesRepository.GetTinctures()
-	return renderTinctures(items)
+	return renderer.renderTinctures(items)
 }

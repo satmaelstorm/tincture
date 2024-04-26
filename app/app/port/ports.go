@@ -15,4 +15,7 @@ type ReceiptStorage interface {
 
 type TinctureStorage interface {
 	GetTinctures() []domain.Tincture
+	SaveTincture(*domain.Tincture)
+	CreateTincture(*domain.Tincture)
+	DeleteTincture(*domain.Tincture)
 }

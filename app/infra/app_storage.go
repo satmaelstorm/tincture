@@ -58,6 +58,18 @@ func (t *TinctureDB) GetTinctures() []domain.Tincture {
 	return tinctures
 }
 
+func (t *TinctureDB) SaveTincture(tincture *domain.Tincture) {
+	t.db.Save(tincture)
+}
+
+func (t *TinctureDB) CreateTincture(tincture *domain.Tincture) {
+	t.db.Create(tincture)
+}
+
+func (t *TinctureDB) DeleteTincture(tincture *domain.Tincture) {
+	t.db.Delete(tincture)
+}
+
 func (t *TinctureDB) getStorage(uri fyne.URI) (fyne.URI, error) {
 	db, err := storage.Child(uri, "tincture.db")
 	if err != nil {

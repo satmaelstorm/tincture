@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
@@ -19,9 +20,13 @@ func renderReceipts(storage port.ReceiptStorage) []*widget.AccordionItem {
 
 func renderReceipt(receipt domain.Receipt) *widget.AccordionItem {
 	receiptContainer := container.New(layout.NewAdaptiveGridLayout(2))
-	desc := container.NewScroll(widget.NewRichTextWithText(receipt.Description))
+	textDesc := widget.NewRichText(&widget.TextSegment{
+		Style: widget.RichTextStyleParagraph,
+		Text:  receipt.Description,
+	})
+	textDesc.Wrapping = fyne.TextWrapWord
+	desc := container.NewScroll(textDesc)
 	receiptContainer.Add(desc)
-	//itemsContainer := container.New(layout.NewGridLayoutWithRows(len(receipt.Items)))
 	itemsContainer := container.New(layout.NewVBoxLayout())
 	for _, item := range receipt.Items {
 		itemsContainer.Add(container.New(

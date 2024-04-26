@@ -27,3 +27,7 @@ func InitApp(
 		tincturesRepository: tinctureStorage,
 	}
 }
+
+func thisApp() *appContainer {
+	return tApp
+}

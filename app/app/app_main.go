@@ -19,9 +19,9 @@ var curUi *ui
 
 func CreateWindow() fyne.Window {
 
-	myWindow := tApp.app.NewWindow("Настойки")
+	myWindow := thisApp().app.NewWindow("Настойки")
 
-	err := tApp.storage.InitDb(tApp.app.Storage().RootURI())
+	err := thisApp().storage.InitDb(thisApp().app.Storage().RootURI())
 	if err != nil {
 		log.Println(err)
 	}
@@ -55,7 +55,7 @@ func getUi() *ui {
 }
 
 func makeReceipts() *widget.Accordion {
-	items := renderReceipts(tApp.receiptsRepository)
+	items := renderReceipts(thisApp().receiptsRepository)
 	accord := widget.NewAccordion(
 		items...,
 	)
@@ -63,6 +63,6 @@ func makeReceipts() *widget.Accordion {
 }
 
 func makeTimes() *fyne.Container {
-	items := tApp.tincturesRepository.GetTinctures()
+	items := thisApp().tincturesRepository.GetTinctures()
 	return renderTinctures(items)
 }

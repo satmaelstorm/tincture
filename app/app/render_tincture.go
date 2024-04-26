@@ -21,7 +21,7 @@ func renderTincture(tincture domain.Tincture) *fyne.Container {
 	now := time.Now()
 	cont := container.New(layout.NewVBoxLayout())
 
-	firstRow := container.New(layout.NewHBoxLayout())
+	firstRow := container.New(layout.NewAdaptiveGridLayout(5))
 	firstRow.Add(widget.NewLabelWithStyle(tincture.Name, fyne.TextAlignLeading, fyne.TextStyle{Bold: true}))
 	firstRow.Add(widget.NewLabelWithStyle("Заложено\n"+tincture.CreatedAt.Format(time.DateOnly), fyne.TextAlignCenter, fyne.TextStyle{}))
 	bottled := widget.NewLabelWithStyle("Переливать\n"+tincture.NeedBottledAt.Format(time.DateOnly), fyne.TextAlignCenter, fyne.TextStyle{})
@@ -35,6 +35,9 @@ func renderTincture(tincture domain.Tincture) *fyne.Container {
 		expiredLabel.Importance = widget.DangerImportance
 	}
 	firstRow.Add(expiredLabel)
+
+	firstRow = addTinctureControlPanel(firstRow)
+
 	cont.Add(firstRow)
 
 	progressPcts := []float64{
@@ -48,13 +51,18 @@ func renderTincture(tincture domain.Tincture) *fyne.Container {
 	}
 
 	for i, progress := range progressPcts {
-		progressRow := container.New(layout.NewGridLayoutWithColumns(2))
+		progressRow := container.New(layout.NewAdaptiveGridLayout(2))
 		progressRow.Add(widget.NewLabel(progressNames[i]))
 		bar := widget.NewProgressBar()
 		bar.SetValue(progress)
 		progressRow.Add(bar)
 		cont.Add(progressRow)
 	}
+
+	return cont
+}
+
+func addTinctureControlPanel(cont *fyne.Container) *fyne.Container {
 
 	return cont
 }

@@ -7,12 +7,17 @@ import (
 	"log"
 )
 
+type uiRenderers struct {
+	prepareTinctureRenderer *prepareTinctureRenderer
+	readyTinctureRenderer   *readyTinctureRenderer
+}
+
 type ui struct {
 	window   fyne.Window
 	receipts *widget.Accordion
-	times    *fyne.Container
 	tabs     []*container.TabItem
 	tabsCont *container.AppTabs
+	render   uiRenderers
 }
 
 var curUi *ui
@@ -47,15 +52,17 @@ func InitialLayout(w fyne.Window) fyne.Window {
 
 func getUi() *ui {
 	if nil == curUi {
-		receipts := makeReceipts()
-		times := makeTimes()
-		tabTimes := container.NewVScroll(times)
+		curUi = &ui{}
+		curUi.receipts = makeReceipts()
+		prepareTinctures := makePrepareTinctures()
+		tabTimes := container.NewVScroll(prepareTinctures)
 		tabTimes.SetMinSize(fyne.NewSize(360, 250))
-		tabs := []*container.TabItem{
-			container.NewTabItem("Мои настойки", tabTimes),
-			container.NewTabItem("Рецепты", receipts),
+		readyTinctures := container.NewVScroll(makeReadyTinctures())
+		curUi.tabs = []*container.TabItem{
+			container.NewTabItem("Настаивается", tabTimes),
+			container.NewTabItem("Погребок", readyTinctures),
+			container.NewTabItem("Рецепты", curUi.receipts),
 		}
-		curUi = &ui{receipts: receipts, times: times, tabs: tabs}
 	}
 	return curUi
 }
@@ -68,8 +75,16 @@ func makeReceipts() *widget.Accordion {
 	return accord
 }
 
-func makeTimes() *fyne.Container {
-	renderer := tinctureRenderer{tinctureRepository: thisApp().tincturesRepository}
-	items := thisApp().tincturesRepository.GetTinctures()
+func makePrepareTinctures() *fyne.Container {
+	renderer := &prepareTinctureRenderer{tinctureRepository: thisApp().tincturesRepository}
+	curUi.render.prepareTinctureRenderer = renderer
+	items := thisApp().tincturesRepository.GetPreparingTinctures()
+	return renderer.renderTinctures(items)
+}
+
+func makeReadyTinctures() *fyne.Container {
+	renderer := &readyTinctureRenderer{tinctureRepository: thisApp().tincturesRepository}
+	curUi.render.readyTinctureRenderer = renderer
+	items := thisApp().tincturesRepository.GetReadyTinctures()
 	return renderer.renderTinctures(items)
 }

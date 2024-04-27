@@ -2,6 +2,10 @@ package app
 
 import (
 	"errors"
+	"sort"
+	"strconv"
+	"time"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
@@ -9,12 +13,9 @@ import (
 	widgetX "fyne.io/x/fyne/widget"
 	"github.com/satmaelstorm/tincture/app/app/port"
 	"github.com/satmaelstorm/tincture/app/domain"
-	"sort"
-	"strconv"
-	"time"
 )
 
-type tinctureRenderer struct {
+type prepareTinctureRenderer struct {
 	tinctureRepository port.TinctureStorage
 	cont               *fyne.Container
 	rows               map[string]*fyne.Container
@@ -22,30 +23,30 @@ type tinctureRenderer struct {
 	tinctures          map[string]domain.Tincture
 }
 
-func (t *tinctureRenderer) renderTinctures(tinctures []domain.Tincture) *fyne.Container {
-	t.rows = make(map[string]*fyne.Container, len(tinctures))
-	t.tinctures = make(map[string]domain.Tincture, len(tinctures))
-	t.cont = container.New(layout.NewVBoxLayout())
-	t.cont.Add(widget.NewButton("Добавить", func() {
-		t.handleAddButton()
+func (p *prepareTinctureRenderer) renderTinctures(tinctures []domain.Tincture) *fyne.Container {
+	p.rows = make(map[string]*fyne.Container, len(tinctures))
+	p.tinctures = make(map[string]domain.Tincture, len(tinctures))
+	p.cont = container.New(layout.NewVBoxLayout())
+	p.cont.Add(widget.NewButton("Добавить", func() {
+		p.handleAddButton()
 	}))
 	for _, tincture := range tinctures {
-		t.addRenderTincture(tincture)
+		p.addRenderTincture(tincture)
 	}
-	return t.cont
+	return p.cont
 }
 
-func (t *tinctureRenderer) addRenderTincture(tincture domain.Tincture) {
+func (p *prepareTinctureRenderer) addRenderTincture(tincture domain.Tincture) {
 	rowCont := container.New(layout.NewVBoxLayout())
-	t.rows[tincture.Uuid.String()] = t.renderTincture(tincture, rowCont)
-	t.cont.Add(rowCont)
-	t.tinctures[tincture.Uuid.String()] = tincture
+	p.rows[tincture.Uuid.String()] = p.renderTincture(tincture, rowCont)
+	p.cont.Add(rowCont)
+	p.tinctures[tincture.Uuid.String()] = tincture
 }
 
-func (t *tinctureRenderer) renderTincture(tincture domain.Tincture, cont *fyne.Container) *fyne.Container {
+func (p *prepareTinctureRenderer) renderTincture(tincture domain.Tincture, cont *fyne.Container) *fyne.Container {
 	now := time.Now()
 	cont.RemoveAll()
-	firstRow := container.New(layout.NewAdaptiveGridLayout(7))
+	firstRow := container.New(layout.NewAdaptiveGridLayout(4))
 	title := widget.NewLabelWithStyle(tincture.Name, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	title.Wrapping = fyne.TextWrapWord
 	firstRow.Add(title)
@@ -55,42 +56,24 @@ func (t *tinctureRenderer) renderTincture(tincture domain.Tincture, cont *fyne.C
 		bottled.Importance = widget.DangerImportance
 	}
 	firstRow.Add(bottled)
-	firstRow.Add(widget.NewLabelWithStyle("Готово к употреблению\n"+tincture.ReadyAt.Format(time.DateOnly), fyne.TextAlignCenter, fyne.TextStyle{}))
-	expiredLabel := widget.NewLabelWithStyle("Срок годности\n"+tincture.ExpiredAt.Format(time.DateOnly), fyne.TextAlignCenter, fyne.TextStyle{})
-	if tincture.IsExpire(now) {
-		expiredLabel.Importance = widget.DangerImportance
-	}
-	firstRow.Add(expiredLabel)
 
-	firstRow = t.addTinctureControlPanel(tincture, firstRow)
+	firstRow = p.addTinctureControlPanel(tincture, firstRow)
 
 	cont.Add(firstRow)
 
-	progressPcts := []float64{
-		tincture.ReadyToBottle(time.Now()),
-		tincture.ReadyToDrink(time.Now()),
-	}
-
-	progressNames := []string{
-		"Готовность перелить",
-		"Готовность к употреблению",
-	}
-
-	for i, progress := range progressPcts {
-		progressRow := container.New(layout.NewAdaptiveGridLayout(2))
-		progressRow.Add(widget.NewLabel(progressNames[i]))
-		bar := widget.NewProgressBar()
-		bar.SetValue(progress)
-		progressRow.Add(bar)
-		cont.Add(progressRow)
-	}
+	progressRow := container.New(layout.NewAdaptiveGridLayout(2))
+	progressRow.Add(widget.NewLabel("Готовность перелить"))
+	bar := widget.NewProgressBar()
+	bar.SetValue(tincture.ReadyToBottle(now))
+	progressRow.Add(bar)
+	cont.Add(progressRow)
 
 	return cont
 }
 
-func (t *tinctureRenderer) addTinctureControlPanel(tincture domain.Tincture, cont *fyne.Container) *fyne.Container {
+func (p *prepareTinctureRenderer) addTinctureControlPanel(tincture domain.Tincture, cont *fyne.Container) *fyne.Container {
 	bottled := widget.NewButton("Перелито", func() {
-		t.handleBottledButton(tincture)
+		p.handleBottledButton(tincture)
 	})
 	if tincture.NeedToBottled(time.Now()) {
 		bottled.Importance = widget.DangerImportance
@@ -101,37 +84,28 @@ func (t *tinctureRenderer) addTinctureControlPanel(tincture domain.Tincture, con
 		bottled.Importance = widget.HighImportance
 	}
 
-	drank := widget.NewButton("Выпито", func() {
-		t.handleDeletedButton(tincture)
-	})
-	drank.Importance = widget.DangerImportance
-
 	cont.Add(bottled)
-	cont.Add(drank)
 	return cont
 }
 
-func (t *tinctureRenderer) handleBottledButton(tincture domain.Tincture) {
+func (p *prepareTinctureRenderer) handleBottledButton(tincture domain.Tincture) {
 	tincture.Bottled(time.Now())
-	t.tinctureRepository.SaveTincture(&tincture)
-	cont := t.rows[tincture.Uuid.String()]
-	t.renderTincture(tincture, cont)
-	cont.Refresh()
+	p.tinctureRepository.SaveTincture(&tincture)
+	getUi().render.readyTinctureRenderer.addTincture(tincture)
+	oldRow := p.rows[tincture.Uuid.String()]
+	delete(p.rows, tincture.Uuid.String())
+	delete(p.tinctures, tincture.Uuid.String())
+	p.cont.Remove(oldRow)
+	p.cont.Refresh()
 }
 
-func (t *tinctureRenderer) handleDeletedButton(tincture domain.Tincture) {
-	t.cont.Remove(t.rows[tincture.Uuid.String()])
-	delete(t.rows, tincture.Uuid.String())
-	t.tinctureRepository.DeleteTincture(&tincture)
+func (p *prepareTinctureRenderer) handleAddButton() {
+	p.createAddPopup()
+	p.addPopup.Show()
 }
 
-func (t *tinctureRenderer) handleAddButton() {
-	t.createAddPopup()
-	t.addPopup.Show()
-}
-
-func (t *tinctureRenderer) createAddPopup() {
-	if nil != t.addPopup {
+func (p *prepareTinctureRenderer) createAddPopup() {
+	if nil != p.addPopup {
 		return
 	}
 	titleEntry := widget.NewEntry()
@@ -206,7 +180,7 @@ func (t *tinctureRenderer) createAddPopup() {
 			daysToRest.Text,
 			daysToExpire.Text,
 		)
-		t.handleSubmitNewTincture(tincture)
+		p.handleSubmitNewTincture(tincture)
 		popup.Hide()
 	}
 
@@ -214,20 +188,20 @@ func (t *tinctureRenderer) createAddPopup() {
 		popup.Hide()
 	}
 
-	popup.Resize(fyne.NewSize(t.cont.Size().Width*0.9, t.cont.Size().Height*0.9))
-	t.addPopup = popup
+	popup.Resize(fyne.NewSize(p.cont.Size().Width*0.9, p.cont.Size().Height*0.9))
+	p.addPopup = popup
 }
 
-func (t *tinctureRenderer) handleSubmitNewTincture(tincture domain.Tincture) {
-	t.tinctureRepository.CreateTincture(&tincture)
-	t.addRenderTincture(tincture)
-	t.rearrangeRows()
-	t.cont.Refresh()
+func (p *prepareTinctureRenderer) handleSubmitNewTincture(tincture domain.Tincture) {
+	p.tinctureRepository.CreateTincture(&tincture)
+	p.addRenderTincture(tincture)
+	p.rearrangeRows()
+	p.cont.Refresh()
 }
 
-func (t *tinctureRenderer) rearrangeRows() {
-	tinctures := make([]domain.Tincture, 0, len(t.tinctures))
-	for _, tincture := range t.tinctures {
+func (p *prepareTinctureRenderer) rearrangeRows() {
+	tinctures := make([]domain.Tincture, 0, len(p.tinctures))
+	for _, tincture := range p.tinctures {
 		tinctures = append(tinctures, tincture)
 	}
 	sort.Slice(tinctures, func(i, j int) bool {
@@ -239,11 +213,11 @@ func (t *tinctureRenderer) rearrangeRows() {
 		}
 		return false
 	})
-	for _, obj := range t.rows {
-		t.cont.Remove(obj)
+	for _, obj := range p.rows {
+		p.cont.Remove(obj)
 
 	}
 	for _, tincture := range tinctures {
-		t.cont.Add(t.rows[tincture.Uuid.String()])
+		p.cont.Add(p.rows[tincture.Uuid.String()])
 	}
 }

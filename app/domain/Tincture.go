@@ -29,12 +29,20 @@ func (t *Tincture) IsExpire(now time.Time) bool {
 	return t.ExpiredAt.Before(now)
 }
 
+func (t *Tincture) IsNearExpire(now time.Time) bool {
+	return t.ExpiredAt.Add(time.Hour * 24 * 14).Before(now)
+}
+
 func (t *Tincture) NeedToBottled(now time.Time) bool {
 	return !t.BottledAt.Valid && t.NeedBottledAt.Before(now)
 }
 
 func (t *Tincture) IsBottled() bool {
 	return t.BottledAt.Valid
+}
+
+func (t *Tincture) IsReady(now time.Time) bool {
+	return t.ReadyAt.Before(now)
 }
 
 func (t *Tincture) Bottled(now time.Time) {

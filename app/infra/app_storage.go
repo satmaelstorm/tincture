@@ -51,9 +51,16 @@ func (t *TinctureDB) GetReceipts() []domain.Receipt {
 	return receipts
 }
 
-func (t *TinctureDB) GetTinctures() []domain.Tincture {
+func (t *TinctureDB) GetPreparingTinctures() []domain.Tincture {
 	var tinctures []domain.Tincture
-	result := t.db.Order("need_bottled_at asc, created_at asc").Find(&tinctures)
+	result := t.db.Order("need_bottled_at asc, created_at asc").Find(&tinctures, "bottled_at IS NULL")
+	log.Printf("Loaded %d tinctures\n", result.RowsAffected)
+	return tinctures
+}
+
+func (t *TinctureDB) GetReadyTinctures() []domain.Tincture {
+	var tinctures []domain.Tincture
+	result := t.db.Order("ready_at asc, expired_at asc").Find(&tinctures, "bottled_at NOT NULL")
 	log.Printf("Loaded %d tinctures\n", result.RowsAffected)
 	return tinctures
 }

@@ -18,11 +18,11 @@ type Tincture struct {
 }
 
 func (t *Tincture) ReadyToBottle(now time.Time) float64 {
-	return readyness(t.CreatedAt, t.NeedBottledAt, now)
+	return readiness(t.CreatedAt, t.NeedBottledAt, now)
 }
 
 func (t *Tincture) ReadyToDrink(now time.Time) float64 {
-	return readyness(t.NeedBottledAt, t.ReadyAt, now)
+	return readiness(t.NeedBottledAt, t.ReadyAt, now)
 }
 
 func (t *Tincture) IsExpire(now time.Time) bool {

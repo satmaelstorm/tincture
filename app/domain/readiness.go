@@ -2,7 +2,7 @@ package domain
 
 import "time"
 
-func readyness(from, to, now time.Time) float64 {
+func readiness(from, to, now time.Time) float64 {
 	if from.After(to) {
 		return 0.0
 	}

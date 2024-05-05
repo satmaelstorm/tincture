@@ -11,8 +11,8 @@ import (
 func initialData(db *gorm.DB) {
 	r := receipts()
 	db.CreateInBatches(r, len(r))
-	t := times()
-	db.CreateInBatches(t, len(t))
+	//t := times()
+	//db.CreateInBatches(t, len(t))
 }
 
 func times() []domain.Tincture {

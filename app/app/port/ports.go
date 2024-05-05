@@ -20,3 +20,7 @@ type TinctureStorage interface {
 	CreateTincture(*domain.Tincture)
 	DeleteTincture(*domain.Tincture)
 }
+
+type AppIcon interface {
+	AsResource() fyne.Resource
+}

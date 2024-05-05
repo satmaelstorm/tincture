@@ -11,6 +11,7 @@ func main() {
 		db,
 		db,
 		db,
+		new(infra.AppIcon),
 	)
 	w := app.CreateWindow()
 	app.InitialLayout(w)

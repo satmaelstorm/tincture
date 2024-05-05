@@ -19,6 +19,7 @@ func InitApp(
 	storage port.InnerStorage,
 	receiptsStorage port.ReceiptStorage,
 	tinctureStorage port.TinctureStorage,
+	appIconProvider port.AppIcon,
 ) {
 	tApp = &appContainer{
 		app:                 app.NewWithID("xyz.satmaelstorm.tincture"),
@@ -26,6 +27,7 @@ func InitApp(
 		receiptsRepository:  receiptsStorage,
 		tincturesRepository: tinctureStorage,
 	}
+	tApp.app.SetIcon(appIconProvider.AsResource())
 }
 
 func thisApp() *appContainer {

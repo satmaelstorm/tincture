@@ -1,0 +1,6 @@
+[Details]
+  Icon = "icon_tincture.png"
+  Name = "Tincture"
+  ID = "xyz.satmaelstorm.tincture"
+  Version = "1.0.0"
+  Build = 2

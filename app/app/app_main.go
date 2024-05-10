@@ -95,11 +95,8 @@ func getUi() *ui {
 }
 
 func makeReceipts() *widget.Accordion {
-	items := renderReceipts(thisApp().receiptsRepository)
-	accord := widget.NewAccordion(
-		items...,
-	)
-	return accord
+	r := &receiptRenderer{receiptsRepository: thisApp().receiptsRepository}
+	return r.renderReceipts()
 }
 
 func makePrepareTinctures() *fyne.Container {

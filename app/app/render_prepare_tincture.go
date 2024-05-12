@@ -88,34 +88,19 @@ func (p *prepareTinctureRenderer) addTinctureControlPanel(tincture domain.Tinctu
 	return cont
 }
 
-func (p *prepareTinctureRenderer) handleBottledButton(tincture domain.Tincture) {
-	tincture.Bottled(time.Now())
-	p.tinctureRepository.SaveTincture(&tincture)
-	getUi().render.readyTinctureRenderer.addTincture(tincture)
-	oldRow := p.rows[tincture.Uuid.String()]
-	delete(p.rows, tincture.Uuid.String())
-	delete(p.tinctures, tincture.Uuid.String())
-	p.cont.Remove(oldRow)
-	p.cont.Refresh()
-}
-
-func (p *prepareTinctureRenderer) handleAddButton() {
-	p.createAddPopup()
-	p.addPopup.Show()
-}
-
 func (p *prepareTinctureRenderer) createAddPopup() {
 	if nil != p.addPopup {
 		return
 	}
 	titleEntry := widget.NewEntry()
 	titleEntry.Validator = func(s string) error {
-		if len(s) < 3 || len(s) > 120 {
+		l := len([]rune(s))
+		if l < 3 || l > 120 {
 			return errors.New("название должно быть от 3 до 120 символов")
 		}
 		return nil
 	}
-	titleEntry.PlaceHolder = "Название от 3 до 120 символов"
+	titleEntry.PlaceHolder = "От 3 букв"
 	createdAtEntry := widget.NewEntry()
 	createdAtEntry.SetText(time.Now().Format(time.DateOnly))
 	createdAtEntry.Validator = func(s string) error {
@@ -150,7 +135,7 @@ func (p *prepareTinctureRenderer) createAddPopup() {
 		return err
 	}
 
-	calendarPopup := widget.NewModalPopUp(widget.NewEntry(), getUi().window.Canvas())
+	calendarPopup := widget.NewModalPopUp(widget.NewEntry(), getUi(nil).window.Canvas())
 
 	createdAtCalendar := widgetX.NewCalendar(time.Now(), func(t time.Time) {
 		createdAtEntry.SetText(t.Format(time.DateOnly))
@@ -158,7 +143,7 @@ func (p *prepareTinctureRenderer) createAddPopup() {
 	})
 	calendarPopup.Content = createdAtCalendar
 
-	createdAtRow := container.New(layout.NewGridLayoutWithColumns(2), createdAtEntry, widget.NewButton("Выбрать день", func() {
+	createdAtRow := container.New(layout.NewAdaptiveGridLayout(2), createdAtEntry, widget.NewButton("Выбрать день", func() {
 		calendarPopup.Show()
 	}))
 
@@ -170,7 +155,7 @@ func (p *prepareTinctureRenderer) createAddPopup() {
 		widget.NewFormItem("Годно дней:", daysToExpire),
 	)
 
-	popup := widget.NewModalPopUp(widget.NewCard("Добавить настойку", "", form), getUi().window.Canvas())
+	popup := widget.NewModalPopUp(widget.NewCard("Добавить настойку", "", form), getUi(nil).window.Canvas())
 
 	form.OnSubmit = func() {
 		tincture := domain.NewTincture(
@@ -181,22 +166,20 @@ func (p *prepareTinctureRenderer) createAddPopup() {
 			daysToExpire.Text,
 		)
 		p.handleSubmitNewTincture(tincture)
+		titleEntry.SetText("")
 		popup.Hide()
 	}
 
 	form.OnCancel = func() {
+		titleEntry.SetText("")
 		popup.Hide()
 	}
 
-	popup.Resize(fyne.NewSize(p.cont.Size().Width*0.9, p.cont.Size().Height*0.9))
-	p.addPopup = popup
-}
+	form.CancelText = "Отмена"
+	form.SubmitText = "Ок"
 
-func (p *prepareTinctureRenderer) handleSubmitNewTincture(tincture domain.Tincture) {
-	p.tinctureRepository.CreateTincture(&tincture)
-	p.addRenderTincture(tincture)
-	p.rearrangeRows()
-	p.cont.Refresh()
+	popup.Resize(fyne.NewSize(p.cont.Size().Width*0.5, p.cont.Size().Height*0.3))
+	p.addPopup = popup
 }
 
 func (p *prepareTinctureRenderer) rearrangeRows() {
@@ -220,4 +203,27 @@ func (p *prepareTinctureRenderer) rearrangeRows() {
 	for _, tincture := range tinctures {
 		p.cont.Add(p.rows[tincture.Uuid.String()])
 	}
+}
+
+func (p *prepareTinctureRenderer) handleBottledButton(tincture domain.Tincture) {
+	tincture.Bottled(time.Now())
+	p.tinctureRepository.SaveTincture(&tincture)
+	getUi(nil).render.readyTinctureRenderer.addTincture(tincture)
+	oldRow := p.rows[tincture.Uuid.String()]
+	delete(p.rows, tincture.Uuid.String())
+	delete(p.tinctures, tincture.Uuid.String())
+	p.cont.Remove(oldRow)
+	p.cont.Refresh()
+}
+
+func (p *prepareTinctureRenderer) handleAddButton() {
+	p.createAddPopup()
+	p.addPopup.Show()
+}
+
+func (p *prepareTinctureRenderer) handleSubmitNewTincture(tincture domain.Tincture) {
+	p.tinctureRepository.CreateTincture(&tincture)
+	p.addRenderTincture(tincture)
+	p.rearrangeRows()
+	p.cont.Refresh()
 }

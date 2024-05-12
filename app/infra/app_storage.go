@@ -51,6 +51,14 @@ func (t *TinctureDB) GetReceipts() []domain.Receipt {
 	return receipts
 }
 
+func (t *TinctureDB) SaveReceipt(receipt *domain.Receipt) {
+	t.db.Save(receipt)
+}
+
+func (t *TinctureDB) CreateReceipt(receipt *domain.Receipt) {
+	t.db.Create(receipt)
+}
+
 func (t *TinctureDB) GetPreparingTinctures() []domain.Tincture {
 	var tinctures []domain.Tincture
 	result := t.db.Order("need_bottled_at asc, created_at asc").Find(&tinctures, "bottled_at IS NULL")

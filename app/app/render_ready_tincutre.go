@@ -77,13 +77,6 @@ func (r *readyTinctureRenderer) addTinctureControlPanel(tincture domain.Tincture
 	return cont
 }
 
-func (r *readyTinctureRenderer) handleDeletedButton(tincture domain.Tincture) {
-	r.cont.Remove(r.rows[tincture.Uuid.String()])
-	delete(r.rows, tincture.Uuid.String())
-	r.tinctureRepository.DeleteTincture(&tincture)
-	delete(r.tinctures, tincture.Uuid.String())
-}
-
 func (r *readyTinctureRenderer) rearrangeRows() {
 	tinctures := make([]domain.Tincture, 0, len(r.tinctures))
 	for _, tincture := range r.tinctures {
@@ -105,4 +98,11 @@ func (r *readyTinctureRenderer) rearrangeRows() {
 	for _, tincture := range tinctures {
 		r.cont.Add(r.rows[tincture.Uuid.String()])
 	}
+}
+
+func (r *readyTinctureRenderer) handleDeletedButton(tincture domain.Tincture) {
+	r.cont.Remove(r.rows[tincture.Uuid.String()])
+	delete(r.rows, tincture.Uuid.String())
+	r.tinctureRepository.DeleteTincture(&tincture)
+	delete(r.tinctures, tincture.Uuid.String())
 }

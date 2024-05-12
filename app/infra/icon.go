@@ -14,3 +14,6 @@ var icon []byte
 func (a *AppIcon) AsResource() fyne.Resource {
 	return fyne.NewStaticResource("icon", icon)
 }
+
+type Icons struct {
+}

@@ -4,7 +4,7 @@ import (
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
-	"fyne.io/fyne/v2/widget"
+	"github.com/satmaelstorm/tincture/app/app/renderers"
 	"log"
 )
 
@@ -15,7 +15,7 @@ type uiRenderers struct {
 
 type ui struct {
 	window   fyne.Window
-	receipts *widget.Accordion
+	receipts *container.Scroll
 	tabs     []*container.TabItem
 	tabsCont *container.AppTabs
 	render   uiRenderers
@@ -36,8 +36,7 @@ func CreateWindow() fyne.Window {
 }
 
 func InitialLayout(w fyne.Window) fyne.Window {
-	ui := getUi()
-	ui.window = w
+	ui := getUi(w)
 
 	ui.tabsCont = container.NewAppTabs(
 		ui.tabs...,
@@ -77,10 +76,10 @@ func resizeDesktop(ui *ui, w fyne.Window) {
 	//w.Resize(fyne.NewSize(float32(pref.Float("width")), float32(pref.Float("height"))))
 }
 
-func getUi() *ui {
+func getUi(w fyne.Window) *ui {
 	if nil == curUi {
-		curUi = &ui{}
-		curUi.receipts = makeReceipts()
+		curUi = &ui{window: w}
+		curUi.receipts = makeReceipts(w.Canvas())
 		prepareTinctures := makePrepareTinctures()
 		tabTimes := container.NewVScroll(prepareTinctures)
 		tabTimes.SetMinSize(fyne.NewSize(360, 250))
@@ -88,15 +87,17 @@ func getUi() *ui {
 		curUi.tabs = []*container.TabItem{
 			container.NewTabItem("Настаивается", tabTimes),
 			container.NewTabItem("Погребок", container.NewVScroll(readyTinctures)),
-			container.NewTabItem("Рецепты", container.NewVScroll(curUi.receipts)),
+			container.NewTabItem("Рецепты", curUi.receipts),
 		}
 	}
 	return curUi
 }
 
-func makeReceipts() *widget.Accordion {
-	r := &receiptRenderer{receiptsRepository: thisApp().receiptsRepository}
-	return r.renderReceipts()
+func makeReceipts(canvas fyne.Canvas) *container.Scroll {
+	r := renderers.NewReceiptRenderer(thisApp().receiptsRepository, thisApp().dispatcher)
+	rCont := container.NewVScroll(r.RenderReceipts())
+	thisApp().initReceiptHandlers(r, renderers.NewReceiptEditForm(thisApp().dispatcher, canvas))
+	return rCont
 }
 
 func makePrepareTinctures() *fyne.Container {

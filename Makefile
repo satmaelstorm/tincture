@@ -1,0 +1,2 @@
+apk:
+	fyne-cross android

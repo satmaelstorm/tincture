@@ -48,6 +48,18 @@ func (r *ReceiptRenderer) AddReceipt(receipt domain.Receipt) {
 	r.cont.Refresh()
 }
 
+func (r *ReceiptRenderer) RefreshReceipt(receipt domain.Receipt) {
+	item := r.accItems.get(receipt)
+	item = r.renderReceipt(receipt, item)
+	r.accord.Refresh()
+}
+
+func (r *ReceiptRenderer) RemoveReceipt(receipt domain.Receipt) {
+	item := r.accItems.get(receipt)
+	r.accord.Remove(item)
+	r.accord.Refresh()
+}
+
 func (r *ReceiptRenderer) renderReceipt(receipt domain.Receipt, accItem *widget.AccordionItem) *widget.AccordionItem {
 	receiptContainer := container.New(layout.NewAdaptiveGridLayout(2))
 
@@ -74,13 +86,11 @@ func (r *ReceiptRenderer) renderReceipt(receipt domain.Receipt, accItem *widget.
 	editButton := widget.NewButton("Редактировать", func() {
 		r.bus.Dispatch(&events.ReceiptEditButton{ReceiptUuid: receipt.Uuid})
 	})
-	editButton.Disable()
 
 	delButton := widget.NewButton("Удалить", func() {
-		r.bus.Dispatch(new(events.ReceiptDeleteButton))
+		r.bus.Dispatch(&events.ReceiptDeleteButton{ReceiptUuid: receipt.Uuid})
 	})
 	delButton.Importance = widget.DangerImportance
-	delButton.Disable()
 
 	buttons := container.NewBorder(widget.NewLabel(""), widget.NewLabel(""), editButton, delButton)
 

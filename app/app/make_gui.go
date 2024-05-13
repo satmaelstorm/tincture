@@ -55,7 +55,7 @@ func InitialLayout(w fyne.Window) fyne.Window {
 	w.SetContent(ui.tabsCont)
 
 	if thisApp().app.Driver().Device().IsMobile() {
-		w.SetFullScreen(true)
+		//w.SetFullScreen(true)
 	} else {
 		resizeDesktop(ui, w)
 	}

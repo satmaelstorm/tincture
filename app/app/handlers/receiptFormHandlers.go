@@ -31,7 +31,7 @@ func (r *ReceiptFormHandlers) SupportEvents() []port.Event {
 }
 
 func (r *ReceiptFormHandlers) DispatchEvent(event port.Event) {
-	switch event.(type) {
+	switch e := event.(type) {
 	case *events.ReceiptFormCancel:
 		r.handleCancel()
 	case *events.ReceiptAddButton:
@@ -39,7 +39,9 @@ func (r *ReceiptFormHandlers) DispatchEvent(event port.Event) {
 	case *events.ReceiptFormSubmit:
 		r.handleSubmitButton()
 	case *events.ReceiptDeleteButton:
-
+		r.handleDeleteButton(e)
+	case *events.ReceiptEditButton:
+		r.handleEditButton(e)
 	}
 }
 
@@ -57,13 +59,27 @@ func (r *ReceiptFormHandlers) handleSubmitButton() {
 	receipt, isNew := r.form.CollectReceipt()
 	if isNew {
 		r.repository.CreateReceipt(&receipt)
+		r.renderer.AddReceipt(receipt)
 	} else {
 		r.repository.SaveReceipt(&receipt)
+		r.renderer.RefreshReceipt(receipt)
 	}
-	r.renderer.AddReceipt(receipt)
 	r.form.Hide()
 }
 
-func (r *ReceiptFormHandlers) handleDeleteButton() {
-	
+func (r *ReceiptFormHandlers) handleDeleteButton(event *events.ReceiptDeleteButton) {
+	receipt, ok := r.repository.GetReceipt(event.ReceiptUuid)
+	if ok && r.repository.DeleteReceipt(receipt) {
+		r.renderer.RemoveReceipt(receipt)
+	}
+}
+
+func (r *ReceiptFormHandlers) handleEditButton(event *events.ReceiptEditButton) {
+	receipt, ok := r.repository.GetReceipt(event.ReceiptUuid)
+	if !ok {
+		r.handleAddButton()
+		return
+	}
+	r.form.FromReceipt(receipt)
+	r.form.Show()
 }

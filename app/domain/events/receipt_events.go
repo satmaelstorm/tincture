@@ -37,6 +37,7 @@ func (r *ReceiptEditButton) Name() string {
 
 type ReceiptDeleteButton struct {
 	BaseEvent
+	ReceiptUuid uuid.UUID
 }
 
 func (r *ReceiptDeleteButton) Name() string {

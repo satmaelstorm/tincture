@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/storage"
+	"github.com/google/uuid"
 	"github.com/satmaelstorm/tincture/app/domain"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -51,7 +52,23 @@ func (t *TinctureDB) GetReceipts() []domain.Receipt {
 	return receipts
 }
 
+func (t *TinctureDB) GetReceipt(uid uuid.UUID) (domain.Receipt, bool) {
+	var receipt domain.Receipt
+	result := t.db.Preload(clause.Associations).Take(&receipt, "uuid = ?", uid.String())
+	if result.RowsAffected < 1 {
+		return receipt, false
+	}
+	return receipt, true
+}
+
+func (t *TinctureDB) DeleteReceipt(receipt domain.Receipt) bool {
+	result := t.db.Delete(receipt)
+	return result.RowsAffected > 0
+}
+
 func (t *TinctureDB) SaveReceipt(receipt *domain.Receipt) {
+	//так как мы зачищаем все ингриденты для простоты, когда берем их из формы, то и тут мы делаем тоже самое
+	t.db.Delete(&domain.ReceiptItem{}, "receipt_uuid = ?", receipt.Uuid.String())
 	t.db.Save(receipt)
 }
 

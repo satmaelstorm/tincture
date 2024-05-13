@@ -2,6 +2,7 @@ package port
 
 import (
 	"fyne.io/fyne/v2"
+	"github.com/google/uuid"
 	"github.com/satmaelstorm/tincture/app/domain"
 )
 
@@ -13,6 +14,8 @@ type ReceiptStorage interface {
 	GetReceipts() []domain.Receipt
 	CreateReceipt(*domain.Receipt)
 	SaveReceipt(*domain.Receipt)
+	GetReceipt(uuid.UUID) (domain.Receipt, bool)
+	DeleteReceipt(domain.Receipt) bool
 }
 
 type TinctureStorage interface {

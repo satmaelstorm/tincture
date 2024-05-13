@@ -54,7 +54,7 @@ func NewReceiptEditForm(
 	descEntry.PlaceHolder = "От 0 до 2000 букв"
 
 	itemsWithButton := container.NewVBox()
-	itemsCont := container.NewAdaptiveGrid(2)
+	itemsCont := container.NewVBox()
 	itemsWithButton.Add(widget.NewButton("Добавить", func() {
 		r.addNewItemRow(false, domain.ReceiptItem{})
 	}))
@@ -91,15 +91,15 @@ func NewReceiptEditForm(
 }
 
 func (r *ReceiptEditForm) Clear() {
-	r.desc.Text = ""
-	r.title.Text = ""
+	r.desc.SetText("")
+	r.title.SetText("")
 	r.currentReceipt = nil
 	r.items.RemoveAll()
 }
 
 func (r *ReceiptEditForm) FromReceipt(receipt domain.Receipt) {
-	r.desc.Text = receipt.Description
-	r.title.Text = receipt.Title
+	r.desc.SetText(receipt.Description)
+	r.title.SetText(receipt.Title)
 	r.currentReceipt = &receipt
 	r.items.RemoveAll()
 	for _, item := range receipt.Items {
@@ -108,6 +108,7 @@ func (r *ReceiptEditForm) FromReceipt(receipt domain.Receipt) {
 }
 
 func (r *ReceiptEditForm) addNewItemRow(addItem bool, item domain.ReceiptItem) {
+	innerCont := container.NewAdaptiveGrid(3)
 	nEntry := widget.NewEntry()
 	nEntry.PlaceHolder = "Название"
 	cEntry := widget.NewEntry()
@@ -116,8 +117,12 @@ func (r *ReceiptEditForm) addNewItemRow(addItem bool, item domain.ReceiptItem) {
 		nEntry.Text = item.Name
 		cEntry.Text = item.Quantity
 	}
-	r.items.Add(nEntry)
-	r.items.Add(cEntry)
+	innerCont.Add(nEntry)
+	innerCont.Add(cEntry)
+	innerCont.Add(widget.NewButton("Удалить", func() {
+		r.items.Remove(innerCont)
+	}))
+	r.items.Add(innerCont)
 }
 
 func (r *ReceiptEditForm) Hide() {
@@ -125,15 +130,21 @@ func (r *ReceiptEditForm) Hide() {
 }
 
 func (r *ReceiptEditForm) Show() {
-	r.popup.Resize(r.canvas.Size())
+	r.popup.Resize(fyne.NewSize(r.canvas.Size().Width*0.95, r.canvas.Size().Height*0.9))
 	r.popup.Show()
 }
 
 func (r *ReceiptEditForm) CollectReceipt() (domain.Receipt, bool) {
 	l := len(r.items.Objects)
-	items := make([]domain.ReceiptItem, 0, l/2)
-	for i := 0; i < l; i += 2 {
-		items = append(items, domain.NewReceiptItem(r.items.Objects[i].(*widget.Entry).Text, r.items.Objects[i+1].(*widget.Entry).Text))
+	items := make([]domain.ReceiptItem, 0, l)
+	for i := 0; i < l; i += 1 {
+		items = append(
+			items,
+			domain.NewReceiptItem(
+				r.items.Objects[i].(*fyne.Container).Objects[0].(*widget.Entry).Text,
+				r.items.Objects[i].(*fyne.Container).Objects[1].(*widget.Entry).Text,
+			),
+		)
 	}
 	if nil == r.currentReceipt {
 		return domain.NewReceipt(r.title.Text, r.desc.Text, items...), true

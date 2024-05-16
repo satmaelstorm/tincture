@@ -9,8 +9,8 @@ import (
 )
 
 type uiRenderers struct {
-	prepareTinctureRenderer *prepareTinctureRenderer
-	readyTinctureRenderer   *readyTinctureRenderer
+	prepareTinctureRenderer *renderers.PrepareTinctureRenderer
+	readyTinctureRenderer   *renderers.ReadyTinctureRenderer
 }
 
 type ui struct {
@@ -36,7 +36,7 @@ func CreateWindow() fyne.Window {
 }
 
 func InitialLayout(w fyne.Window) fyne.Window {
-	ui := getUi(w)
+	ui := makeUi(w)
 
 	ui.tabsCont = container.NewAppTabs(
 		ui.tabs...,
@@ -76,14 +76,14 @@ func resizeDesktop(ui *ui, w fyne.Window) {
 	//w.Resize(fyne.NewSize(float32(pref.Float("width")), float32(pref.Float("height"))))
 }
 
-func getUi(w fyne.Window) *ui {
+func makeUi(w fyne.Window) *ui {
 	if nil == curUi {
 		curUi = &ui{window: w}
 		curUi.receipts = makeReceipts(w.Canvas())
+		readyTinctures := makeReadyTinctures()
 		prepareTinctures := makePrepareTinctures()
 		tabTimes := container.NewVScroll(prepareTinctures)
 		tabTimes.SetMinSize(fyne.NewSize(360, 250))
-		readyTinctures := makeReadyTinctures()
 		curUi.tabs = []*container.TabItem{
 			container.NewTabItem("Настаивается", tabTimes),
 			container.NewTabItem("Погребок", container.NewVScroll(readyTinctures)),
@@ -100,16 +100,20 @@ func makeReceipts(canvas fyne.Canvas) *container.Scroll {
 	return rCont
 }
 
-func makePrepareTinctures() *fyne.Container {
-	renderer := &prepareTinctureRenderer{tinctureRepository: thisApp().tincturesRepository}
-	curUi.render.prepareTinctureRenderer = renderer
-	items := thisApp().tincturesRepository.GetPreparingTinctures()
-	return renderer.renderTinctures(items)
-}
-
 func makeReadyTinctures() *fyne.Container {
-	renderer := &readyTinctureRenderer{tinctureRepository: thisApp().tincturesRepository}
+	renderer := renderers.NewReadyTinctureRenderer(thisApp().tincturesRepository)
 	curUi.render.readyTinctureRenderer = renderer
 	items := thisApp().tincturesRepository.GetReadyTinctures()
-	return renderer.renderTinctures(items)
+	return renderer.RenderTinctures(items)
+}
+
+func makePrepareTinctures() *fyne.Container {
+	renderer := renderers.NewPrepareTinctureRenderer(
+		thisApp().tincturesRepository,
+		curUi.window.Canvas(),
+		curUi.render.readyTinctureRenderer,
+	)
+	curUi.render.prepareTinctureRenderer = renderer
+	items := thisApp().tincturesRepository.GetPreparingTinctures()
+	return renderer.RenderTinctures(items)
 }

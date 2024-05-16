@@ -82,6 +82,9 @@ func makeUi(w fyne.Window) *ui {
 		curUi.receipts = makeReceipts(w.Canvas())
 		readyTinctures := makeReadyTinctures()
 		prepareTinctures := makePrepareTinctures()
+
+		thisApp().initTinctureHandlers(curUi.render.readyTinctureRenderer, curUi.render.prepareTinctureRenderer)
+
 		tabTimes := container.NewVScroll(prepareTinctures)
 		tabTimes.SetMinSize(fyne.NewSize(360, 250))
 		curUi.tabs = []*container.TabItem{
@@ -104,7 +107,6 @@ func makeReadyTinctures() *fyne.Container {
 	renderer := renderers.NewReadyTinctureRenderer(
 		thisApp().dispatcher,
 	)
-	thisApp().initReadyTinctureHandlers(renderer)
 	curUi.render.readyTinctureRenderer = renderer
 	items := thisApp().tincturesRepository.GetReadyTinctures()
 	return renderer.RenderTinctures(items)
@@ -114,7 +116,6 @@ func makePrepareTinctures() *fyne.Container {
 	renderer := renderers.NewPrepareTinctureRenderer(
 		thisApp().tincturesRepository,
 		curUi.window.Canvas(),
-		curUi.render.readyTinctureRenderer,
 		thisApp().dispatcher,
 	)
 	curUi.render.prepareTinctureRenderer = renderer

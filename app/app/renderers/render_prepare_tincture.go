@@ -2,6 +2,7 @@ package renderers
 
 import (
 	"errors"
+	"github.com/satmaelstorm/tincture/app/domain/events"
 	"sort"
 	"strconv"
 	"time"
@@ -18,25 +19,24 @@ import (
 type PrepareTinctureRenderer struct {
 	tinctureRepository port.TinctureStorage
 	canvas             fyne.Canvas
-	readyTinctures     *ReadyTinctureRenderer
 	bus                port.EventBus
 
 	cont      *fyne.Container
 	rows      map[string]*fyne.Container
 	addPopup  *widget.PopUp
 	tinctures map[string]domain.Tincture
+
+	formTitleEntry *widget.Entry
 }
 
 func NewPrepareTinctureRenderer(
 	repository port.TinctureStorage,
 	canvas fyne.Canvas,
-	renderer *ReadyTinctureRenderer,
 	bus port.EventBus,
 ) *PrepareTinctureRenderer {
 	return &PrepareTinctureRenderer{
 		tinctureRepository: repository,
 		canvas:             canvas,
-		readyTinctures:     renderer,
 		bus:                bus,
 	}
 }
@@ -46,12 +46,36 @@ func (p *PrepareTinctureRenderer) RenderTinctures(tinctures []domain.Tincture) *
 	p.tinctures = make(map[string]domain.Tincture, len(tinctures))
 	p.cont = container.New(layout.NewVBoxLayout())
 	p.cont.Add(widget.NewButton("Добавить", func() {
-		p.handleAddButton()
+		p.bus.Dispatch(&events.TinctureAddButton{})
 	}))
 	for _, tincture := range tinctures {
 		p.addRenderTincture(tincture)
 	}
 	return p.cont
+}
+
+func (p *PrepareTinctureRenderer) ShowAddPopup() {
+	p.createAddPopup()
+	p.formTitleEntry.SetText("")
+	p.addPopup.Show()
+}
+
+func (p *PrepareTinctureRenderer) HideAddPopup() {
+	p.addPopup.Hide()
+}
+
+func (p *PrepareTinctureRenderer) AddTincture(tincture domain.Tincture) {
+	p.addRenderTincture(tincture)
+	p.rearrangeRows()
+	p.cont.Refresh()
+}
+
+func (p *PrepareTinctureRenderer) RemoveTincture(tincture domain.Tincture) {
+	oldRow := p.rows[tincture.Uuid.String()]
+	delete(p.rows, tincture.Uuid.String())
+	delete(p.tinctures, tincture.Uuid.String())
+	p.cont.Remove(oldRow)
+	p.cont.Refresh()
 }
 
 func (p *PrepareTinctureRenderer) addRenderTincture(tincture domain.Tincture) {
@@ -91,7 +115,7 @@ func (p *PrepareTinctureRenderer) renderTincture(tincture domain.Tincture, cont 
 
 func (p *PrepareTinctureRenderer) addTinctureControlPanel(tincture domain.Tincture, cont *fyne.Container) *fyne.Container {
 	bottled := widget.NewButton("Перелито", func() {
-		p.handleBottledButton(tincture)
+		p.bus.Dispatch(&events.TinctureBottled{Tincture: tincture})
 	})
 	if tincture.NeedToBottled(time.Now()) {
 		bottled.Importance = widget.DangerImportance
@@ -119,6 +143,8 @@ func (p *PrepareTinctureRenderer) createAddPopup() {
 		return nil
 	}
 	titleEntry.PlaceHolder = "От 3 букв"
+	p.formTitleEntry = titleEntry
+
 	createdAtEntry := widget.NewEntry()
 	createdAtEntry.SetText(time.Now().Format(time.DateOnly))
 	createdAtEntry.Validator = func(s string) error {
@@ -183,14 +209,11 @@ func (p *PrepareTinctureRenderer) createAddPopup() {
 			daysToRest.Text,
 			daysToExpire.Text,
 		)
-		p.handleSubmitNewTincture(tincture)
-		titleEntry.SetText("")
-		popup.Hide()
+		p.bus.Dispatch(&events.TinctureSubmit{Tincture: tincture})
 	}
 
 	form.OnCancel = func() {
-		titleEntry.SetText("")
-		popup.Hide()
+		p.bus.Dispatch(new(events.TinctureCancelButton))
 	}
 
 	form.CancelText = "Отмена"
@@ -221,27 +244,4 @@ func (p *PrepareTinctureRenderer) rearrangeRows() {
 	for _, tincture := range tinctures {
 		p.cont.Add(p.rows[tincture.Uuid.String()])
 	}
-}
-
-func (p *PrepareTinctureRenderer) handleBottledButton(tincture domain.Tincture) {
-	tincture.Bottled(time.Now())
-	p.tinctureRepository.SaveTincture(&tincture)
-	p.readyTinctures.addTincture(tincture)
-	oldRow := p.rows[tincture.Uuid.String()]
-	delete(p.rows, tincture.Uuid.String())
-	delete(p.tinctures, tincture.Uuid.String())
-	p.cont.Remove(oldRow)
-	p.cont.Refresh()
-}
-
-func (p *PrepareTinctureRenderer) handleAddButton() {
-	p.createAddPopup()
-	p.addPopup.Show()
-}
-
-func (p *PrepareTinctureRenderer) handleSubmitNewTincture(tincture domain.Tincture) {
-	p.tinctureRepository.CreateTincture(&tincture)
-	p.addRenderTincture(tincture)
-	p.rearrangeRows()
-	p.cont.Refresh()
 }

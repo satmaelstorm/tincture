@@ -46,11 +46,15 @@ func (a *appContainer) initReceiptHandlers(
 	a.dispatcher.AddSubscriber(handler)
 }
 
-func (a *appContainer) initReadyTinctureHandlers(
+func (a *appContainer) initTinctureHandlers(
 	ready *renderers.ReadyTinctureRenderer,
+	prepare *renderers.PrepareTinctureRenderer,
 ) {
 	rHandler := handlers.NewReadyTinctureHandlers(ready, a.tincturesRepository)
 	a.dispatcher.AddSubscriber(rHandler)
+
+	pHandler := handlers.NewPrepareTinctureHandlers(ready, prepare, a.tincturesRepository)
+	a.dispatcher.AddSubscriber(pHandler)
 }
 
 func thisApp() *appContainer {

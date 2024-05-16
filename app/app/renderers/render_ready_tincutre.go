@@ -45,7 +45,7 @@ func (r *ReadyTinctureRenderer) RemoveTincture(tincture domain.Tincture) {
 	r.rearrangeRows()
 }
 
-func (r *ReadyTinctureRenderer) addTincture(tincture domain.Tincture) {
+func (r *ReadyTinctureRenderer) AddTincture(tincture domain.Tincture) {
 	r.addRenderTincture(tincture)
 	r.rearrangeRows()
 	r.cont.Refresh()

@@ -19,6 +19,7 @@ type PrepareTinctureRenderer struct {
 	tinctureRepository port.TinctureStorage
 	canvas             fyne.Canvas
 	readyTinctures     *ReadyTinctureRenderer
+	bus                port.EventBus
 
 	cont      *fyne.Container
 	rows      map[string]*fyne.Container
@@ -30,11 +31,13 @@ func NewPrepareTinctureRenderer(
 	repository port.TinctureStorage,
 	canvas fyne.Canvas,
 	renderer *ReadyTinctureRenderer,
+	bus port.EventBus,
 ) *PrepareTinctureRenderer {
 	return &PrepareTinctureRenderer{
 		tinctureRepository: repository,
 		canvas:             canvas,
 		readyTinctures:     renderer,
+		bus:                bus,
 	}
 }
 

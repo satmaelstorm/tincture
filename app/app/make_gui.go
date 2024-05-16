@@ -101,7 +101,10 @@ func makeReceipts(canvas fyne.Canvas) *container.Scroll {
 }
 
 func makeReadyTinctures() *fyne.Container {
-	renderer := renderers.NewReadyTinctureRenderer(thisApp().tincturesRepository)
+	renderer := renderers.NewReadyTinctureRenderer(
+		thisApp().dispatcher,
+	)
+	thisApp().initReadyTinctureHandlers(renderer)
 	curUi.render.readyTinctureRenderer = renderer
 	items := thisApp().tincturesRepository.GetReadyTinctures()
 	return renderer.RenderTinctures(items)
@@ -112,6 +115,7 @@ func makePrepareTinctures() *fyne.Container {
 		thisApp().tincturesRepository,
 		curUi.window.Canvas(),
 		curUi.render.readyTinctureRenderer,
+		thisApp().dispatcher,
 	)
 	curUi.render.prepareTinctureRenderer = renderer
 	items := thisApp().tincturesRepository.GetPreparingTinctures()

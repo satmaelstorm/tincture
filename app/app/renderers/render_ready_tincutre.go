@@ -7,29 +7,25 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/satmaelstorm/tincture/app/app/port"
 	"github.com/satmaelstorm/tincture/app/domain"
+	"github.com/satmaelstorm/tincture/app/domain/events"
 	"sort"
 	"time"
 )
 
 type ReadyTinctureRenderer struct {
-	tinctureRepository port.TinctureStorage
-	cont               *fyne.Container
-	rows               map[string]*fyne.Container
-	tinctures          map[string]domain.Tincture
+	bus port.EventBus
+
+	cont      *fyne.Container
+	rows      map[string]*fyne.Container
+	tinctures map[string]domain.Tincture
 }
 
 func NewReadyTinctureRenderer(
-	repository port.TinctureStorage,
+	bus port.EventBus,
 ) *ReadyTinctureRenderer {
 	return &ReadyTinctureRenderer{
-		tinctureRepository: repository,
+		bus: bus,
 	}
-}
-
-func (r *ReadyTinctureRenderer) addTincture(tincture domain.Tincture) {
-	r.addRenderTincture(tincture)
-	r.rearrangeRows()
-	r.cont.Refresh()
 }
 
 func (r *ReadyTinctureRenderer) RenderTinctures(tinctures []domain.Tincture) *fyne.Container {
@@ -40,6 +36,19 @@ func (r *ReadyTinctureRenderer) RenderTinctures(tinctures []domain.Tincture) *fy
 		r.addRenderTincture(tincture)
 	}
 	return r.cont
+}
+
+func (r *ReadyTinctureRenderer) RemoveTincture(tincture domain.Tincture) {
+	r.cont.Remove(r.rows[tincture.Uuid.String()])
+	delete(r.rows, tincture.Uuid.String())
+	delete(r.tinctures, tincture.Uuid.String())
+	r.rearrangeRows()
+}
+
+func (r *ReadyTinctureRenderer) addTincture(tincture domain.Tincture) {
+	r.addRenderTincture(tincture)
+	r.rearrangeRows()
+	r.cont.Refresh()
 }
 
 func (r *ReadyTinctureRenderer) addRenderTincture(tincture domain.Tincture) {
@@ -77,7 +86,7 @@ func (r *ReadyTinctureRenderer) renderTincture(tincture domain.Tincture, cont *f
 func (r *ReadyTinctureRenderer) addTinctureControlPanel(tincture domain.Tincture, cont *fyne.Container) *fyne.Container {
 
 	drank := widget.NewButton("Выпито", func() {
-		r.handleDeletedButton(tincture)
+		r.bus.Dispatch(&events.TinctureDrunk{Tincture: tincture})
 	})
 	drank.Importance = widget.DangerImportance
 
@@ -106,11 +115,4 @@ func (r *ReadyTinctureRenderer) rearrangeRows() {
 	for _, tincture := range tinctures {
 		r.cont.Add(r.rows[tincture.Uuid.String()])
 	}
-}
-
-func (r *ReadyTinctureRenderer) handleDeletedButton(tincture domain.Tincture) {
-	r.cont.Remove(r.rows[tincture.Uuid.String()])
-	delete(r.rows, tincture.Uuid.String())
-	r.tinctureRepository.DeleteTincture(&tincture)
-	delete(r.tinctures, tincture.Uuid.String())
 }

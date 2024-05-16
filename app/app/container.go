@@ -17,8 +17,6 @@ type appContainer struct {
 	tincturesRepository port.TinctureStorage
 	icons               port.AppIcons
 	dispatcher          port.EventDispatcher
-
-	handlerReceiptForm *handlers.ReceiptFormHandlers
 }
 
 func InitApp(
@@ -46,7 +44,13 @@ func (a *appContainer) initReceiptHandlers(
 ) {
 	handler := handlers.NewReceiptFormHandlers(r, f, a.receiptsRepository)
 	a.dispatcher.AddSubscriber(handler)
-	a.handlerReceiptForm = handler
+}
+
+func (a *appContainer) initReadyTinctureHandlers(
+	ready *renderers.ReadyTinctureRenderer,
+) {
+	rHandler := handlers.NewReadyTinctureHandlers(ready, a.tincturesRepository)
+	a.dispatcher.AddSubscriber(rHandler)
 }
 
 func thisApp() *appContainer {

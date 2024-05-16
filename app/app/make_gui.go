@@ -15,7 +15,7 @@ type uiRenderers struct {
 
 type ui struct {
 	window   fyne.Window
-	receipts *container.Scroll
+	receipts *fyne.Container
 	tabs     []*container.TabItem
 	tabsCont *container.AppTabs
 	render   uiRenderers
@@ -90,15 +90,15 @@ func makeUi(w fyne.Window) *ui {
 		curUi.tabs = []*container.TabItem{
 			container.NewTabItem("Настаивается", tabTimes),
 			container.NewTabItem("Погребок", container.NewVScroll(readyTinctures)),
-			container.NewTabItem("Рецепты", curUi.receipts),
+			container.NewTabItem("Рецепты", container.NewVScroll(curUi.receipts)),
 		}
 	}
 	return curUi
 }
 
-func makeReceipts(canvas fyne.Canvas) *container.Scroll {
+func makeReceipts(canvas fyne.Canvas) *fyne.Container {
 	r := renderers.NewReceiptRenderer(thisApp().receiptsRepository, thisApp().dispatcher)
-	rCont := container.NewVScroll(r.RenderReceipts())
+	rCont := r.RenderReceipts()
 	thisApp().initReceiptHandlers(r, renderers.NewReceiptEditForm(thisApp().dispatcher, canvas))
 	return rCont
 }

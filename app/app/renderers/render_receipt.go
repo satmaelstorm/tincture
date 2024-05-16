@@ -32,10 +32,11 @@ func (r *ReceiptRenderer) RenderReceipts() *fyne.Container {
 	for _, receipt := range receipts {
 		aItems = append(aItems, r.renderReceipt(receipt, r.accItems.makeNew(receipt)))
 	}
-	r.cont = container.NewVBox()
-	r.cont.Add(widget.NewButton("Добавить", func() {
+	addButton := widget.NewButton("Добавить рецепт", func() {
 		r.bus.Dispatch(new(events.ReceiptAddButton))
-	}))
+	})
+	r.cont = container.New(layout.NewVBoxLayout())
+	r.cont.Add(container.NewPadded(addButton))
 	r.accord = widget.NewAccordion(aItems...)
 	r.cont.Add(r.accord)
 	return r.cont

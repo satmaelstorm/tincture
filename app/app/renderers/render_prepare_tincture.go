@@ -45,9 +45,9 @@ func (p *PrepareTinctureRenderer) RenderTinctures(tinctures []domain.Tincture) *
 	p.rows = make(map[string]*fyne.Container, len(tinctures))
 	p.tinctures = make(map[string]domain.Tincture, len(tinctures))
 	p.cont = container.New(layout.NewVBoxLayout())
-	p.cont.Add(widget.NewButton("Добавить", func() {
+	p.cont.Add(container.NewPadded(widget.NewButton("Добавить", func() {
 		p.bus.Dispatch(&events.TinctureAddButton{})
-	}))
+	})))
 	for _, tincture := range tinctures {
 		p.addRenderTincture(tincture)
 	}

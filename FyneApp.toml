@@ -2,5 +2,5 @@
   Icon = "icon_tincture.png"
   Name = "Tincture"
   ID = "xyz.satmaelstorm.tincture"
-  Version = "1.1.1"
-  Build = 18
+  Version = "1.1.5"
+  Build = 24

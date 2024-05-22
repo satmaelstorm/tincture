@@ -50,6 +50,7 @@ func (p *PrepareTinctureHandlers) DispatchEvent(event port.Event) {
 
 func (p *PrepareTinctureHandlers) handleBottled(event *events.TinctureBottled) {
 	event.Tincture.Bottled(time.Now())
+	p.repository.SaveTincture(&event.Tincture)
 	p.prepare.RemoveTincture(event.Tincture)
 	p.ready.AddTincture(event.Tincture)
 }

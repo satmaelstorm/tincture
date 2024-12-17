@@ -43,3 +43,13 @@ type ReceiptDeleteButton struct {
 func (r *ReceiptDeleteButton) Name() string {
 	return "receipt_delete_button"
 }
+
+type ReceiptConfirmDeleteButton struct {
+	BaseEvent
+	ReceiptTitle string
+	Callback     func(b bool)
+}
+
+func (r *ReceiptConfirmDeleteButton) Name() string {
+	return "receipt_confirm_delete_button"
+}

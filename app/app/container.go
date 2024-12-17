@@ -42,8 +42,12 @@ func (a *appContainer) initReceiptHandlers(
 	r *renderers.ReceiptRenderer,
 	f *renderers.ReceiptEditForm,
 ) {
-	handler := handlers.NewReceiptFormHandlers(r, f, a.receiptsRepository)
+	handler := handlers.NewReceiptFormHandlers(r, f, a.receiptsRepository, a.dispatcher)
 	a.dispatcher.AddSubscriber(handler)
+}
+
+func (a *appContainer) initConfirmHandlers(w fyne.Window) {
+	a.dispatcher.AddSubscriber(handlers.NewConfirmFormHandler(w))
 }
 
 func (a *appContainer) initTinctureHandlers(

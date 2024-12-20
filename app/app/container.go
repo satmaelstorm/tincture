@@ -54,7 +54,7 @@ func (a *appContainer) initTinctureHandlers(
 	ready *renderers.ReadyTinctureRenderer,
 	prepare *renderers.PrepareTinctureRenderer,
 ) {
-	rHandler := handlers.NewReadyTinctureHandlers(ready, a.tincturesRepository)
+	rHandler := handlers.NewReadyTinctureHandlers(ready, a.tincturesRepository, a.dispatcher)
 	a.dispatcher.AddSubscriber(rHandler)
 
 	pHandler := handlers.NewPrepareTinctureHandlers(ready, prepare, a.tincturesRepository)

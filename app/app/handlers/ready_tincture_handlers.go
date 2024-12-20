@@ -9,15 +9,18 @@ import (
 type ReadyTinctureHandlers struct {
 	renderer   *renderers.ReadyTinctureRenderer
 	repository port.TinctureStorage
+	bus        port.EventBus
 }
 
 func NewReadyTinctureHandlers(
 	renderer *renderers.ReadyTinctureRenderer,
 	repository port.TinctureStorage,
+	bus port.EventBus,
 ) *ReadyTinctureHandlers {
 	return &ReadyTinctureHandlers{
 		renderer:   renderer,
 		repository: repository,
+		bus:        bus,
 	}
 }
 
@@ -35,6 +38,13 @@ func (r *ReadyTinctureHandlers) DispatchEvent(event port.Event) {
 }
 
 func (r *ReadyTinctureHandlers) handleDeleteButton(event *events.TinctureDrunk) {
-	r.repository.DeleteTincture(&event.Tincture)
-	r.renderer.RemoveTincture(event.Tincture)
+	r.bus.Dispatch(&events.TinctureConfirmDrunk{
+		Tincture: event.Tincture,
+		Callback: func(b bool) {
+			if b {
+				r.repository.DeleteTincture(&event.Tincture)
+				r.renderer.RemoveTincture(event.Tincture)
+			}
+		},
+	})
 }

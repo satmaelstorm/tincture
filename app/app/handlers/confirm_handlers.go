@@ -19,6 +19,7 @@ func NewConfirmFormHandler(w fyne.Window) *ConfirmFormHandler {
 func (r *ConfirmFormHandler) SupportEvents() []port.Event {
 	return []port.Event{
 		&events.ReceiptConfirmDeleteButton{},
+		&events.TinctureConfirmDrunk{},
 	}
 }
 
@@ -26,7 +27,19 @@ func (r *ConfirmFormHandler) DispatchEvent(event port.Event) {
 	switch e := event.(type) {
 	case *events.ReceiptConfirmDeleteButton:
 		r.confirmDeleteReceipt(e)
+	case *events.TinctureConfirmDrunk:
+		r.confirmDrunkTincture(e)
+
 	}
+}
+
+func (r *ConfirmFormHandler) confirmDrunkTincture(event *events.TinctureConfirmDrunk) {
+	dialog.ShowConfirm(
+		"Вы действительно выпили всё?",
+		fmt.Sprintf("Вы хотите пометить %s как выпитое.", event.Tincture.Name),
+		event.Callback,
+		r.w,
+	)
 }
 
 func (r *ConfirmFormHandler) confirmDeleteReceipt(event *events.ReceiptConfirmDeleteButton) {

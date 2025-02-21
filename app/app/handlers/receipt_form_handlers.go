@@ -10,14 +10,16 @@ type ReceiptFormHandlers struct {
 	renderer   *renderers.ReceiptRenderer
 	form       *renderers.ReceiptEditForm
 	repository port.ReceiptStorage
+	bus        port.EventBus
 }
 
 func NewReceiptFormHandlers(
 	r *renderers.ReceiptRenderer,
 	f *renderers.ReceiptEditForm,
 	repo port.ReceiptStorage,
+	bus port.EventBus,
 ) *ReceiptFormHandlers {
-	return &ReceiptFormHandlers{renderer: r, form: f, repository: repo}
+	return &ReceiptFormHandlers{renderer: r, form: f, repository: repo, bus: bus}
 }
 
 func (r *ReceiptFormHandlers) SupportEvents() []port.Event {
@@ -69,9 +71,18 @@ func (r *ReceiptFormHandlers) handleSubmitButton() {
 
 func (r *ReceiptFormHandlers) handleDeleteButton(event *events.ReceiptDeleteButton) {
 	receipt, ok := r.repository.GetReceipt(event.ReceiptUuid)
-	if ok && r.repository.DeleteReceipt(receipt) {
-		r.renderer.RemoveReceipt(receipt)
+	if !ok {
+		return
 	}
+
+	r.bus.Dispatch(&events.ReceiptConfirmDeleteButton{
+		ReceiptTitle: receipt.Title,
+		Callback: func(b bool) {
+			if b && r.repository.DeleteReceipt(receipt) {
+				r.renderer.RemoveReceipt(receipt)
+			}
+		},
+	})
 }
 
 func (r *ReceiptFormHandlers) handleEditButton(event *events.ReceiptEditButton) {

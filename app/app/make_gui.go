@@ -82,6 +82,7 @@ func makeUi(w fyne.Window) *ui {
 		curUi.receipts = makeReceipts(w.Canvas())
 		readyTinctures := makeReadyTinctures()
 		prepareTinctures := makePrepareTinctures()
+		makeConfirm(w)
 
 		thisApp().initTinctureHandlers(curUi.render.readyTinctureRenderer, curUi.render.prepareTinctureRenderer)
 
@@ -94,6 +95,10 @@ func makeUi(w fyne.Window) *ui {
 		}
 	}
 	return curUi
+}
+
+func makeConfirm(w fyne.Window) {
+	thisApp().initConfirmHandlers(w)
 }
 
 func makeReceipts(canvas fyne.Canvas) *fyne.Container {

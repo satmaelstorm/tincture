@@ -11,6 +11,16 @@ func (r *TinctureDrunk) Name() string {
 	return "ready_tincture_drunk"
 }
 
+type TinctureConfirmDrunk struct {
+	BaseEvent
+	Tincture domain.Tincture
+	Callback func(b bool)
+}
+
+func (r *TinctureConfirmDrunk) Name() string {
+	return "confirm_tincture_drunk"
+}
+
 type TinctureBottled struct {
 	BaseEvent
 	Tincture domain.Tincture

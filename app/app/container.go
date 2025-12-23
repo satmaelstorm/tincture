@@ -17,6 +17,7 @@ type appContainer struct {
 	tincturesRepository port.TinctureStorage
 	icons               port.AppIcons
 	dispatcher          port.EventDispatcher
+	localizer           port.Localizer
 }
 
 func InitApp(
@@ -26,6 +27,7 @@ func InitApp(
 	appIconProvider port.AppIcon,
 	iconsProvider port.AppIcons,
 	dispatcher port.EventDispatcher,
+	localizer port.Localizer,
 ) {
 	tApp = &appContainer{
 		app:                 app.NewWithID("xyz.satmaelstorm.tincture"),
@@ -34,6 +36,7 @@ func InitApp(
 		tincturesRepository: tinctureStorage,
 		icons:               iconsProvider,
 		dispatcher:          dispatcher,
+		localizer:           localizer,
 	}
 	tApp.app.SetIcon(appIconProvider.AsResource())
 }
@@ -47,7 +50,7 @@ func (a *appContainer) initReceiptHandlers(
 }
 
 func (a *appContainer) initConfirmHandlers(w fyne.Window) {
-	a.dispatcher.AddSubscriber(handlers.NewConfirmFormHandler(w))
+	a.dispatcher.AddSubscriber(handlers.NewConfirmFormHandler(w, a.localizer))
 }
 
 func (a *appContainer) initTinctureHandlers(
@@ -59,6 +62,10 @@ func (a *appContainer) initTinctureHandlers(
 
 	pHandler := handlers.NewPrepareTinctureHandlers(ready, prepare, a.tincturesRepository)
 	a.dispatcher.AddSubscriber(pHandler)
+}
+
+func (a *appContainer) Localizer() port.Localizer {
+	return a.localizer
 }
 
 func thisApp() *appContainer {

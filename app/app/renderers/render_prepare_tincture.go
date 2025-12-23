@@ -2,10 +2,11 @@ package renderers
 
 import (
 	"errors"
-	"github.com/satmaelstorm/tincture/app/domain/events"
 	"sort"
 	"strconv"
 	"time"
+
+	"github.com/satmaelstorm/tincture/app/domain/events"
 
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
@@ -20,6 +21,7 @@ type PrepareTinctureRenderer struct {
 	tinctureRepository port.TinctureStorage
 	canvas             fyne.Canvas
 	bus                port.EventBus
+	localizer          port.Localizer
 
 	cont      *fyne.Container
 	rows      map[string]*fyne.Container
@@ -33,11 +35,13 @@ func NewPrepareTinctureRenderer(
 	repository port.TinctureStorage,
 	canvas fyne.Canvas,
 	bus port.EventBus,
+	localizer port.Localizer,
 ) *PrepareTinctureRenderer {
 	return &PrepareTinctureRenderer{
 		tinctureRepository: repository,
 		canvas:             canvas,
 		bus:                bus,
+		localizer:          localizer,
 	}
 }
 
@@ -45,7 +49,7 @@ func (p *PrepareTinctureRenderer) RenderTinctures(tinctures []domain.Tincture) *
 	p.rows = make(map[string]*fyne.Container, len(tinctures))
 	p.tinctures = make(map[string]domain.Tincture, len(tinctures))
 	p.cont = container.New(layout.NewVBoxLayout())
-	p.cont.Add(container.NewPadded(widget.NewButton("Добавить", func() {
+	p.cont.Add(container.NewPadded(widget.NewButton(p.localizer.Localize("addTinctureButton"), func() {
 		p.bus.Dispatch(&events.TinctureAddButton{})
 	})))
 	for _, tincture := range tinctures {
@@ -92,8 +96,8 @@ func (p *PrepareTinctureRenderer) renderTincture(tincture domain.Tincture, cont 
 	title := widget.NewLabelWithStyle(tincture.Name, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	title.Wrapping = fyne.TextWrapWord
 	firstRow.Add(title)
-	firstRow.Add(widget.NewLabelWithStyle("Заложено\n"+tincture.CreatedAt.Format(time.DateOnly), fyne.TextAlignCenter, fyne.TextStyle{}))
-	bottled := widget.NewLabelWithStyle("Переливать\n"+tincture.NeedBottledAt.Format(time.DateOnly), fyne.TextAlignCenter, fyne.TextStyle{})
+	firstRow.Add(widget.NewLabelWithStyle(p.localizer.Localize("tinctureCreatedAt")+"\n"+tincture.CreatedAt.Format(time.DateOnly), fyne.TextAlignCenter, fyne.TextStyle{}))
+	bottled := widget.NewLabelWithStyle(p.localizer.Localize("tinctureNeedBottledAt")+"\n"+tincture.NeedBottledAt.Format(time.DateOnly), fyne.TextAlignCenter, fyne.TextStyle{})
 	if tincture.NeedToBottled(now) {
 		bottled.Importance = widget.DangerImportance
 	}
@@ -104,7 +108,7 @@ func (p *PrepareTinctureRenderer) renderTincture(tincture domain.Tincture, cont 
 	cont.Add(firstRow)
 
 	progressRow := container.New(layout.NewAdaptiveGridLayout(2))
-	progressRow.Add(widget.NewLabel("Готовность перелить"))
+	progressRow.Add(widget.NewLabel(p.localizer.Localize("tinctureBottleProgress")))
 	bar := widget.NewProgressBar()
 	bar.SetValue(tincture.ReadyToBottle(now))
 	progressRow.Add(bar)
@@ -114,7 +118,7 @@ func (p *PrepareTinctureRenderer) renderTincture(tincture domain.Tincture, cont 
 }
 
 func (p *PrepareTinctureRenderer) addTinctureControlPanel(tincture domain.Tincture, cont *fyne.Container) *fyne.Container {
-	bottled := widget.NewButton("Перелито", func() {
+	bottled := widget.NewButton(p.localizer.Localize("bottleTinctureButton"), func() {
 		p.bus.Dispatch(&events.TinctureBottled{Tincture: tincture})
 	})
 	if tincture.NeedToBottled(time.Now()) {
@@ -138,11 +142,11 @@ func (p *PrepareTinctureRenderer) createAddPopup() {
 	titleEntry.Validator = func(s string) error {
 		l := len([]rune(s))
 		if l < 3 || l > 120 {
-			return errors.New("название должно быть от 3 до 120 символов")
+			return errors.New(p.localizer.Localize("tinctureNameValidationError"))
 		}
 		return nil
 	}
-	titleEntry.PlaceHolder = "От 3 букв"
+	titleEntry.PlaceHolder = p.localizer.Localize("tinctureNamePlaceholder")
 	p.formTitleEntry = titleEntry
 
 	createdAtEntry := widget.NewEntry()
@@ -156,7 +160,7 @@ func (p *PrepareTinctureRenderer) createAddPopup() {
 	daysToBottle.Validator = func(s string) error {
 		i, err := strconv.Atoi(s)
 		if i < 0 {
-			return errors.New("число не может быть меньше 0")
+			return errors.New(p.localizer.Localize("tinctureDaysValidationError"))
 		}
 		return err
 	}
@@ -165,7 +169,7 @@ func (p *PrepareTinctureRenderer) createAddPopup() {
 	daysToRest.Validator = func(s string) error {
 		i, err := strconv.Atoi(s)
 		if i < 0 {
-			return errors.New("число не может быть меньше 0")
+			return errors.New(p.localizer.Localize("tinctureDaysValidationError"))
 		}
 		return err
 	}
@@ -174,7 +178,7 @@ func (p *PrepareTinctureRenderer) createAddPopup() {
 	daysToExpire.Validator = func(s string) error {
 		i, err := strconv.Atoi(s)
 		if i < 0 {
-			return errors.New("число не может быть меньше 0")
+			return errors.New(p.localizer.Localize("tinctureDaysValidationError"))
 		}
 		return err
 	}
@@ -187,19 +191,19 @@ func (p *PrepareTinctureRenderer) createAddPopup() {
 	})
 	calendarPopup.Content = createdAtCalendar
 
-	createdAtRow := container.New(layout.NewAdaptiveGridLayout(2), createdAtEntry, widget.NewButton("Выбрать день", func() {
+	createdAtRow := container.New(layout.NewAdaptiveGridLayout(2), createdAtEntry, widget.NewButton(p.localizer.Localize("tinctureChooseDay"), func() {
 		calendarPopup.Show()
 	}))
 
 	form := widget.NewForm(
-		widget.NewFormItem("Название:", titleEntry),
-		widget.NewFormItem("Заложено:", createdAtRow),
-		widget.NewFormItem("Настаивать дней:", daysToBottle),
-		widget.NewFormItem("Отдыхать дней:", daysToRest),
-		widget.NewFormItem("Годно дней:", daysToExpire),
+		widget.NewFormItem(p.localizer.Localize("tinctureName")+":", titleEntry),
+		widget.NewFormItem(p.localizer.Localize("tinctureCreatedAt")+":", createdAtRow),
+		widget.NewFormItem(p.localizer.Localize("tinctureDaysToBottle")+":", daysToBottle),
+		widget.NewFormItem(p.localizer.Localize("tinctureDaysToRest")+":", daysToRest),
+		widget.NewFormItem(p.localizer.Localize("tinctureDaysToExpire")+":", daysToExpire),
 	)
 
-	popup := widget.NewModalPopUp(widget.NewCard("Добавить настойку", "", form), p.canvas)
+	popup := widget.NewModalPopUp(widget.NewCard(p.localizer.Localize("tinctureAddPopupTitle"), "", form), p.canvas)
 
 	form.OnSubmit = func() {
 		tincture := domain.NewTincture(
@@ -216,8 +220,8 @@ func (p *PrepareTinctureRenderer) createAddPopup() {
 		p.bus.Dispatch(new(events.TinctureCancelButton))
 	}
 
-	form.CancelText = "Отмена"
-	form.SubmitText = "Ок"
+	form.CancelText = p.localizer.Localize("tinctureAddPopupCancel")
+	form.SubmitText = p.localizer.Localize("tinctureAddPopupSubmit")
 
 	popup.Resize(fyne.NewSize(p.cont.Size().Width*0.5, p.cont.Size().Height*0.3))
 	p.addPopup = popup

@@ -1,6 +1,9 @@
 package renderers
 
 import (
+	"sort"
+	"time"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/layout"
@@ -8,12 +11,11 @@ import (
 	"github.com/satmaelstorm/tincture/app/app/port"
 	"github.com/satmaelstorm/tincture/app/domain"
 	"github.com/satmaelstorm/tincture/app/domain/events"
-	"sort"
-	"time"
 )
 
 type ReadyTinctureRenderer struct {
-	bus port.EventBus
+	bus       port.EventBus
+	localizer port.Localizer
 
 	cont      *fyne.Container
 	rows      map[string]*fyne.Container
@@ -22,9 +24,11 @@ type ReadyTinctureRenderer struct {
 
 func NewReadyTinctureRenderer(
 	bus port.EventBus,
+	localizer port.Localizer,
 ) *ReadyTinctureRenderer {
 	return &ReadyTinctureRenderer{
-		bus: bus,
+		bus:       bus,
+		localizer: localizer,
 	}
 }
 
@@ -65,12 +69,12 @@ func (r *ReadyTinctureRenderer) renderTincture(tincture domain.Tincture, cont *f
 	title := widget.NewLabelWithStyle(tincture.Name, fyne.TextAlignLeading, fyne.TextStyle{Bold: true})
 	title.Wrapping = fyne.TextWrapWord
 	firstRow.Add(title)
-	readiness := widget.NewLabelWithStyle("Готово к употреблению\n"+tincture.ReadyAt.Format(time.DateOnly), fyne.TextAlignCenter, fyne.TextStyle{})
+	readiness := widget.NewLabelWithStyle(r.localizer.Localize("tinctureReadyAt")+"\n"+tincture.ReadyAt.Format(time.DateOnly), fyne.TextAlignCenter, fyne.TextStyle{})
 	if tincture.IsReady(now) {
 		readiness.Importance = widget.SuccessImportance
 	}
 	firstRow.Add(readiness)
-	expiredLabel := widget.NewLabelWithStyle("Срок годности\n"+tincture.ExpiredAt.Format(time.DateOnly), fyne.TextAlignCenter, fyne.TextStyle{})
+	expiredLabel := widget.NewLabelWithStyle(r.localizer.Localize("tinctureExpiredAt")+"\n"+tincture.ExpiredAt.Format(time.DateOnly), fyne.TextAlignCenter, fyne.TextStyle{})
 	if tincture.IsNearExpire(now) {
 		expiredLabel.Importance = widget.DangerImportance
 	}
@@ -85,7 +89,7 @@ func (r *ReadyTinctureRenderer) renderTincture(tincture domain.Tincture, cont *f
 
 func (r *ReadyTinctureRenderer) addTinctureControlPanel(tincture domain.Tincture, cont *fyne.Container) *fyne.Container {
 
-	drank := widget.NewButton("Выпито", func() {
+	drank := widget.NewButton(r.localizer.Localize("drinkTinctureButton"), func() {
 		r.bus.Dispatch(&events.TinctureDrunk{Tincture: tincture})
 	})
 	drank.Importance = widget.DangerImportance

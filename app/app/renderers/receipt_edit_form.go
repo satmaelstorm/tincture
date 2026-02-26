@@ -2,6 +2,7 @@ package renderers
 
 import (
 	"errors"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
@@ -18,7 +19,8 @@ type ReceiptEditForm struct {
 	popup  *widget.PopUp
 	canvas fyne.Canvas
 
-	bus port.EventBus
+	bus       port.EventBus
+	localizer port.Localizer
 
 	currentReceipt *domain.Receipt
 }
@@ -26,17 +28,19 @@ type ReceiptEditForm struct {
 func NewReceiptEditForm(
 	bus port.EventBus,
 	canvas fyne.Canvas,
+	localizer port.Localizer,
 ) *ReceiptEditForm {
 	r := new(ReceiptEditForm)
 	r.bus = bus
 	r.canvas = canvas
+	r.localizer = localizer
 
 	titleEntry := widget.NewEntry()
-	titleEntry.PlaceHolder = "От 3 букв"
+	titleEntry.PlaceHolder = r.localizer.Localize("tinctureNamePlaceholder")
 	titleEntry.Validator = func(s string) error {
 		l := len([]rune(s))
 		if l < 3 || l > 120 {
-			return errors.New("название должно быть от 3 до 120 символов")
+			return errors.New(r.localizer.Localize("tinctureNameValidationError"))
 		}
 		return nil
 	}
@@ -47,27 +51,27 @@ func NewReceiptEditForm(
 	descEntry.Validator = func(s string) error {
 		l := len([]rune(s))
 		if l > 2000 {
-			return errors.New("описание должно быть от 0 до 2000 символов")
+			return errors.New(r.localizer.Localize("tinctureDescriptionValidationError"))
 		}
 		return nil
 	}
-	descEntry.PlaceHolder = "От 0 до 2000 букв"
+	descEntry.PlaceHolder = r.localizer.Localize("tinctureDescriptionPlaceholder")
 
 	itemsWithButton := container.NewVBox()
 	itemsCont := container.NewVBox()
-	itemsWithButton.Add(widget.NewButton("Добавить", func() {
+	itemsWithButton.Add(widget.NewButton(r.localizer.Localize("tinctureAddItem"), func() {
 		r.addNewItemRow(false, domain.ReceiptItem{})
 	}))
 	itemsWithButton.Add(itemsCont)
 
 	form := widget.NewForm(
-		widget.NewFormItem("Название", titleEntry),
-		widget.NewFormItem("Описание", descEntry),
-		widget.NewFormItem("Ингридиенты", itemsWithButton),
+		widget.NewFormItem(r.localizer.Localize("tinctureName"), titleEntry),
+		widget.NewFormItem(r.localizer.Localize("tinctureDescription"), descEntry),
+		widget.NewFormItem(r.localizer.Localize("tinctureIngredients"), itemsWithButton),
 	)
 
-	form.CancelText = "Отмена"
-	form.SubmitText = "Ок"
+	form.CancelText = r.localizer.Localize("tinctureFormCancel")
+	form.SubmitText = r.localizer.Localize("tinctureFormSubmit")
 
 	form.OnCancel = func() {
 		r.bus.Dispatch(new(events.ReceiptFormCancel))
@@ -110,16 +114,16 @@ func (r *ReceiptEditForm) FromReceipt(receipt domain.Receipt) {
 func (r *ReceiptEditForm) addNewItemRow(addItem bool, item domain.ReceiptItem) {
 	innerCont := container.NewAdaptiveGrid(3)
 	nEntry := widget.NewEntry()
-	nEntry.PlaceHolder = "Название"
+	nEntry.PlaceHolder = r.localizer.Localize("tinctureItemName")
 	cEntry := widget.NewEntry()
-	cEntry.PlaceHolder = "Кол-во"
+	cEntry.PlaceHolder = r.localizer.Localize("tinctureItemQuantity")
 	if addItem {
 		nEntry.Text = item.Name
 		cEntry.Text = item.Quantity
 	}
 	innerCont.Add(nEntry)
 	innerCont.Add(cEntry)
-	innerCont.Add(widget.NewButton("Удалить", func() {
+	innerCont.Add(widget.NewButton(r.localizer.Localize("tinctureDeleteItem"), func() {
 		r.items.Remove(innerCont)
 	}))
 	r.items.Add(innerCont)

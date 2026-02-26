@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/dialog"
 	"github.com/satmaelstorm/tincture/app/app/port"
@@ -9,11 +8,12 @@ import (
 )
 
 type ConfirmFormHandler struct {
-	w fyne.Window
+	w         fyne.Window
+	localizer port.Localizer
 }
 
-func NewConfirmFormHandler(w fyne.Window) *ConfirmFormHandler {
-	return &ConfirmFormHandler{w: w}
+func NewConfirmFormHandler(w fyne.Window, localizer port.Localizer) *ConfirmFormHandler {
+	return &ConfirmFormHandler{w: w, localizer: localizer}
 }
 
 func (r *ConfirmFormHandler) SupportEvents() []port.Event {
@@ -35,8 +35,10 @@ func (r *ConfirmFormHandler) DispatchEvent(event port.Event) {
 
 func (r *ConfirmFormHandler) confirmDrunkTincture(event *events.TinctureConfirmDrunk) {
 	dialog.ShowConfirm(
-		"Вы действительно выпили всё?",
-		fmt.Sprintf("Вы хотите пометить %s как выпитое.", event.Tincture.Name),
+		r.localizer.Localize("tinctureConfirmDrink"),
+		r.localizer.LocalizeWithTemplate("tinctureConfirmDelete", map[string]interface{}{
+			"Name": event.Tincture.Name,
+		}),
 		event.Callback,
 		r.w,
 	)
@@ -44,8 +46,10 @@ func (r *ConfirmFormHandler) confirmDrunkTincture(event *events.TinctureConfirmD
 
 func (r *ConfirmFormHandler) confirmDeleteReceipt(event *events.ReceiptConfirmDeleteButton) {
 	dialog.ShowConfirm(
-		"Вы действительно хотите удалить рецепт?",
-		fmt.Sprintf("Вы хотите удалить рецепт %s", event.ReceiptTitle),
+		r.localizer.Localize("receiptConfirmDelete"),
+		r.localizer.LocalizeWithTemplate("receiptConfirmDeleteMessage", map[string]interface{}{
+			"Title": event.ReceiptTitle,
+		}),
 		event.Callback,
 		r.w,
 	)

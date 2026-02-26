@@ -1,11 +1,12 @@
 package app
 
 import (
+	"log"
+
 	"fyne.io/fyne/v2"
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/theme"
 	"github.com/satmaelstorm/tincture/app/app/renderers"
-	"log"
 )
 
 type uiRenderers struct {
@@ -89,9 +90,9 @@ func makeUi(w fyne.Window) *ui {
 		tabTimes := container.NewVScroll(prepareTinctures)
 		tabTimes.SetMinSize(fyne.NewSize(360, 250))
 		curUi.tabs = []*container.TabItem{
-			container.NewTabItem("Настаивается", tabTimes),
-			container.NewTabItem("Погребок", container.NewVScroll(readyTinctures)),
-			container.NewTabItem("Рецепты", container.NewVScroll(curUi.receipts)),
+			container.NewTabItem(thisApp().Localizer().Localize("preparingTab"), tabTimes),
+			container.NewTabItem(thisApp().Localizer().Localize("readyTab"), container.NewVScroll(readyTinctures)),
+			container.NewTabItem(thisApp().Localizer().Localize("receiptsTab"), container.NewVScroll(curUi.receipts)),
 		}
 	}
 	return curUi
@@ -102,15 +103,16 @@ func makeConfirm(w fyne.Window) {
 }
 
 func makeReceipts(canvas fyne.Canvas) *fyne.Container {
-	r := renderers.NewReceiptRenderer(thisApp().receiptsRepository, thisApp().dispatcher)
+	r := renderers.NewReceiptRenderer(thisApp().receiptsRepository, thisApp().dispatcher, thisApp().Localizer())
 	rCont := r.RenderReceipts()
-	thisApp().initReceiptHandlers(r, renderers.NewReceiptEditForm(thisApp().dispatcher, canvas))
+	thisApp().initReceiptHandlers(r, renderers.NewReceiptEditForm(thisApp().dispatcher, canvas, thisApp().Localizer()))
 	return rCont
 }
 
 func makeReadyTinctures() *fyne.Container {
 	renderer := renderers.NewReadyTinctureRenderer(
 		thisApp().dispatcher,
+		thisApp().Localizer(),
 	)
 	curUi.render.readyTinctureRenderer = renderer
 	items := thisApp().tincturesRepository.GetReadyTinctures()
@@ -122,6 +124,7 @@ func makePrepareTinctures() *fyne.Container {
 		thisApp().tincturesRepository,
 		curUi.window.Canvas(),
 		thisApp().dispatcher,
+		thisApp().Localizer(),
 	)
 	curUi.render.prepareTinctureRenderer = renderer
 	items := thisApp().tincturesRepository.GetPreparingTinctures()

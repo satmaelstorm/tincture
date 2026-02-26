@@ -16,13 +16,19 @@ type ReceiptRenderer struct {
 	cont               *fyne.Container
 	accItems           *receiptAccordionItems
 	bus                port.EventBus
+	localizer          port.Localizer
 }
 
 func NewReceiptRenderer(
 	repository port.ReceiptStorage,
 	bus port.EventBus,
+	localizer port.Localizer,
 ) *ReceiptRenderer {
-	return &ReceiptRenderer{receiptsRepository: repository, bus: bus}
+	return &ReceiptRenderer{
+		receiptsRepository: repository,
+		bus:                bus,
+		localizer:          localizer,
+	}
 }
 
 func (r *ReceiptRenderer) RenderReceipts() *fyne.Container {
@@ -32,7 +38,7 @@ func (r *ReceiptRenderer) RenderReceipts() *fyne.Container {
 	for _, receipt := range receipts {
 		aItems = append(aItems, r.renderReceipt(receipt, r.accItems.makeNew(receipt)))
 	}
-	addButton := widget.NewButton("Добавить рецепт", func() {
+	addButton := widget.NewButton(r.localizer.Localize("addReceiptButton"), func() {
 		r.bus.Dispatch(new(events.ReceiptAddButton))
 	})
 	r.cont = container.New(layout.NewVBoxLayout())
@@ -84,11 +90,11 @@ func (r *ReceiptRenderer) renderReceipt(receipt domain.Receipt, accItem *widget.
 	}
 	receiptContainer.Add(itemsContainer)
 
-	editButton := widget.NewButton("Редактировать", func() {
+	editButton := widget.NewButton(r.localizer.Localize("editReceiptButton"), func() {
 		r.bus.Dispatch(&events.ReceiptEditButton{ReceiptUuid: receipt.Uuid})
 	})
 
-	delButton := widget.NewButton("Удалить", func() {
+	delButton := widget.NewButton(r.localizer.Localize("deleteReceiptButton"), func() {
 		r.bus.Dispatch(&events.ReceiptDeleteButton{ReceiptUuid: receipt.Uuid})
 	})
 	delButton.Importance = widget.DangerImportance
